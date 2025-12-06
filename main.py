@@ -40,15 +40,15 @@ logger = logging.getLogger(__name__)
 
 
 # --- Bot & API Configuration ---
-API_ID = int(os.environ.get("API_ID", "12345"))
-API_HASH = os.environ.get("API_HASH", "your_api_hash")
+API_ID = int(os.environ.get("API_ID", "29961422"))
+API_HASH = os.environ.get("API_HASH", "cba915c79809dc0806676db7052b2a83")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "your_bot_token")
-MONGO_URL = os.environ.get("MONGO_URL", "your_mongodb_url")
-TMDB_API_KEY = os.environ.get("TMDB_API_KEY", "your_tmdb_api_key")
+MONGO_URL = os.environ.get("MONGO_URL", "mongodb+srv://movieloverz11220:KtsMU9bBA9E3aIHh@cluster0.uqb5pin.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+TMDB_API_KEY = os.environ.get("TMDB_API_KEY", "1ba98a04426a253bc7cb4be687abe2ed")
 
 # --- Channel & Owner Information ---
-AUTH_CHANNEL = int(os.environ.get("AUTH_CHANNEL", "-1002245813234"))
-OWNER_ID = int(os.environ.get("OWNER_ID", "5926160191"))
+AUTH_CHANNEL = int(os.environ.get("AUTH_CHANNEL", "-1002230197603"))
+OWNER_ID = int(os.environ.get("OWNER_ID", "949657126"))
 
 # ---------------------------------------------------------------------------
 # 🔹 Global Variables & Client Initialization
@@ -378,7 +378,7 @@ async def start_handler(bot, msg: Message):
         except Exception as e:
             logger.error(f"Could not get invite link for AUTH_CHANNEL {AUTH_CHANNEL}: {e}")
             error_buttons = [
-                [InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ ✪", url="https://t.me/Prime_Support_Group")]
+                [InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ ✪", url="https://t.me/Movie_loverzz")]
             ]
             return await msg.reply_text(
                 "⚠️ **Oops! Something went wrong while creating the Auth Check.**\n\n"
@@ -392,18 +392,18 @@ async def start_handler(bot, msg: Message):
     buttons = [
         [InlineKeyboardButton(" 🎬 ʜᴏᴡ ᴛᴏ ᴄʀᴇᴀᴛᴇ ᴀ ᴘᴏꜱᴛ", callback_data="create_post_help")],
         [
-            InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ", url="https://t.me/Prime_Support_Group"),
-            InlineKeyboardButton("〄 ᴜᴘᴅᴀᴛᴇs ᴄʜᴀɴɴᴇʟ", url="https://t.me/PrimeXBots")
+            InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ", url="https://t.me/Movie_loverzz"),
+            InlineKeyboardButton("〄 ᴜᴘᴅᴀᴛᴇs ᴄʜᴀɴɴᴇʟ", url="https://t.me/MovieEntertainment4u")
         ],
         [
             InlineKeyboardButton("⚙️ ꜱᴇᴛᴛɪɴɢꜱ", callback_data="settings_menu"),
             InlineKeyboardButton("〆 ᴀʙᴏᴜᴛ 〆", callback_data="about_bot")
         ],
-        [InlineKeyboardButton("✧ ᴄʀᴇᴀᴛᴏʀ ✧", url="https://t.me/Prime_Nayem")]
+        [InlineKeyboardButton("✧ ᴄʀᴇᴀᴛᴏʀ ✧", url="https://t.me/Mladminbot")]
     ]
 
     await msg.reply_photo(
-        photo="https://i.postimg.cc/gjNQNCGK/IMG-20251104-062650-153.jpg",
+        photo="https://envs.sh/vxr.jpg",
         caption=(
             f"👋 ᴡᴇʟᴄᴏᴍᴇ, {msg.from_user.mention}!\n\n"
             "🎬 ɪ’ᴍ ʏᴏᴜʀ **ᴀᴅᴠᴀɴᴄᴇᴅ ᴘᴏꜱᴛ ɢᴇɴᴇʀᴀᴛᴏʀ ʙᴏᴛ** — ʙᴜɪʟᴛ ᴛᴏ ᴄʀᴇᴀᴛᴇ ʙᴇᴀᴜᴛɪꜰᴜʟ ᴍᴏᴠɪᴇ & ꜱᴇʀɪᴇꜱ ᴘᴏꜱᴛꜱ ᴇꜰꜰᴏʀᴛʟᴇꜱꜱʟʏ!\n\n"
@@ -415,7 +415,7 @@ async def start_handler(bot, msg: Message):
             "   ɪ’ʟʟ ɪɴꜱᴛᴀɴᴛʟʏ ᴘᴏꜱᴛ ɪᴛ ᴡɪᴛʜ ʏᴏᴜʀ ᴄᴜꜱᴛᴏᴍ ʜᴇᴀᴅᴇʀ, ꜰᴏᴏᴛᴇʀ, ᴄᴀᴘᴛɪᴏɴ, ʙᴜᴛᴛᴏɴꜱ, ᴀɴᴅ ʀᴇᴀᴄᴛɪᴏɴꜱ!\n\n"
             "💡 **ᴛʀʏ ɪᴛ ɴᴏᴡ:**\n"
             "ꜱᴇɴᴅ ᴀ ᴍᴏᴠɪᴇ ɴᴀᴍᴇ ᴏʀ ᴀ ᴘʜᴏᴛᴏ/ᴠɪᴅᴇᴏ ᴛᴏ ɢᴇᴛ ꜱᴛᴀʀᴛᴇᴅ!\n\n"
-            "📢 @PrimeXBots — Your Creative Posting Assistant 💫"
+            "📢 Your Creative Posting Assistant 💫"
         ),
         reply_markup=InlineKeyboardMarkup(buttons)
             )
@@ -761,7 +761,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
         f"╚══════════════════════╝"
     )
 
-    download_section_header = "📦 **Download Links** 📦"
+    download_section_header = "🔰 **Download Links** 🔰"
     download_links = ""
     
     LINK_LENGTH_THRESHOLD = 32
@@ -918,7 +918,7 @@ async def direct_media_handler(bot, msg: Message):
         except Exception as e:
             logger.error(f"Could not get invite link for AUTH_CHANNEL {AUTH_CHANNEL}: {e}")
             error_buttons = [
-                [InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ ✪", url="https://t.me/Prime_Support_Group")]
+                [InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ ✪", url="https://t.me/MOVIE_LOVERZZ")]
             ]
             return await msg.reply_text(
                 "⚠️ **Oops! Something went wrong while creating the Auth Check.**\n\n"
@@ -1079,7 +1079,7 @@ async def forward_handler(bot, msg: Message):
         except Exception as e:
             logger.error(f"Could not get invite link for AUTH_CHANNEL {AUTH_CHANNEL}: {e}")
             error_buttons = [
-                [InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ ✪", url="https://t.me/Prime_Support_Group")]
+                [InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ ✪", url="https://t.me/MovieEntertainment4u")]
             ]
             return await msg.reply_text(
                 "⚠️ **Oops! Something went wrong while creating the Auth Check.**\n\n"
@@ -1206,13 +1206,13 @@ async def navigation_handler(bot, cq: CallbackQuery):
     if data == "start_menu":
         buttons = [
             [InlineKeyboardButton(" 🎬 ʜᴏᴡ ᴛᴏ ᴄʀᴇᴀᴛᴇ ᴀ ᴘᴏꜱᴛ", callback_data="create_post_help")],
-            [InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ", url="https://t.me/Prime_Support_group"), InlineKeyboardButton("〄 ᴜᴘᴅᴀᴛᴇs ᴄʜᴀɴɴᴇʟ", url="https://t.me/PrimeXBots")],
+            [InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ", url="https://t.me/MovieEntertainment4u"), InlineKeyboardButton("〄 ᴜᴘᴅᴀᴛᴇs ᴄʜᴀɴɴᴇʟ", url="https://t.me/MOVIE_LOVERZZ")],
             [InlineKeyboardButton("⚙️ ꜱᴇᴛᴛɪɴɢꜱ", callback_data="settings_menu"), InlineKeyboardButton("〆 ᴀʙᴏᴜᴛ 〆", callback_data="about_bot")],
-            [InlineKeyboardButton("✧ ᴄʀᴇᴀᴛᴏʀ ✧", url="https://t.me/Prime_Nayem")]
+            [InlineKeyboardButton("✧ ᴄʀᴇᴀᴛᴏʀ ✧", url="https://t.me/mladminbot")]
         ]
         await bot.send_photo(
             chat_id=chat_id,
-            photo="https://i.postimg.cc/gjNQNCGK/IMG-20251104-062650-153.jpg",
+            photo="https://envs.sh/vxr.jpg",
             caption=(
                 f"👋 ᴡᴇʟᴄᴏᴍᴇ, {cq.from_user.mention}!\n\n"
                 "🎬 ɪ’ᴍ ʏᴏᴜʀ **ᴀᴅᴠᴀɴᴄᴇᴅ ᴘᴏꜱᴛ ɢᴇɴᴇʀᴀᴛᴏʀ ʙᴏᴛ** — ʙᴜɪʟᴛ ᴛᴏ ᴄʀᴇᴀᴛᴇ ʙᴇᴀᴜᴛɪꜰᴜʟ ᴍᴏᴠɪᴇ & ꜱᴇʀɪᴇꜱ ᴘᴏꜱᴛꜱ ᴇꜰꜰᴏʀᴛʟᴇꜱꜱʟʏ!\n\n"
@@ -1224,7 +1224,7 @@ async def navigation_handler(bot, cq: CallbackQuery):
                 "   ɪ’ʟʟ ɪɴꜱᴛᴀɴᴛʟʏ ᴘᴏꜱᴛ ɪᴛ ᴛʜᴇʀᴇ ᴡɪᴛʜ ʏᴏᴜʀ ᴄᴜꜱᴛᴏᴍ ʜᴇᴀᴅᴇʀ, ꜰᴏᴏᴛᴇʀ, ᴄᴀᴘᴛɪᴏɴ, ʙᴜᴛᴛᴏɴꜱ, ᴀɴᴅ ʀᴇᴀᴄᴛɪᴏɴꜱ!\n\n"
                 "💡 **ᴛʀʏ ɪᴛ ɴᴏᴡ:**\n"
                 "ꜱᴇɴᴅ ᴀ ᴍᴏᴠɪᴇ ɴᴀᴍᴇ ᴏʀ ᴀ ᴘʜᴏᴛᴏ/ᴠɪᴅᴇᴏ ᴛᴏ ɢᴇᴛ ꜱᴛᴀʀᴛᴇᴅ!\n\n"
-                "📢 @PrimeXBots — Your Creative Posting Assistant 💫"
+                "📢 Your Creative Posting Assistant 💫"
             ),
             reply_markup=InlineKeyboardMarkup(buttons)
         )
@@ -1330,7 +1330,7 @@ async def navigation_handler(bot, cq: CallbackQuery):
             chat_id=chat_id,
             text=settings_text,
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ ✪", url="https://t.me/Prime_Support_Group")],
+                [InlineKeyboardButton("✪ ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ ✪", url="https://t.me/movie_loverzz")],
                 [InlineKeyboardButton("⌫ Back", callback_data="start_menu")]
             ])
                             )
@@ -1365,14 +1365,14 @@ async def about_bot_handler(bot: Client, cq: CallbackQuery):
     await cq.message.delete() # Deletes the previous message (the start menu)
 
     about_text = (
-        "<b>✦✗✦ <a href='https://t.me/PrimeXBots'>ᴍy ᴅᴇᴛᴀɪʟꜱ ʙy ᴘʀɪᴍᴇXʙᴏᴛs</a> ✦✗✦</b>\n\n"
-        "‣ ᴍʏ ɴᴀᴍᴇ : @Post_Generator_PrimeXBot\n"
+        "<b>✦✗✦ <a href='https://t.me/movie_loverzz'>ᴍy ᴅᴇᴛᴀɪʟꜱ ʙy Movie Loverz</a> ✦✗✦</b>\n\n"
+        "‣ ᴍʏ ɴᴀᴍᴇ :Post_Generator\n"
         "‣ ᴍʏ ʙᴇsᴛ ғʀɪᴇɴᴅ : <a href='tg://user?id={user_id}'>ᴛʜɪs ᴘᴇʀsᴏɴ</a>\n"
-        "‣ ᴅᴇᴠᴇʟᴏᴘᴇʀ : <a href='https://t.me/Prime_Nayem'>ᴍʀ.ᴘʀɪᴍᴇ</a>\n"
-        "‣ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ : <a href='https://t.me/PrimeXBots'>ᴘʀɪᴍᴇXʙᴏᴛꜱ</a>\n"
-        "‣ ᴍᴀɪɴ ᴄʜᴀɴɴᴇʟ : <a href='https://t.me/PrimeCineZone'>Pʀɪᴍᴇ Cɪɴᴇᴢᴏɴᴇ</a>\n"
-        "‣ ѕᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ : <a href='https://t.me/Prime_Support_group'>ᴘʀɪᴍᴇ X ѕᴜᴘᴘᴏʀᴛ</a>\n"
-        "‣ ᴅᴀᴛᴀ ʙᴀsᴇ : <a href='https://www.mongodb.com/'>ᴍᴏɴɢᴏ ᴅʙ</a>\n"
+        "‣ ᴅᴇᴠᴇʟᴏᴘᴇʀ : <a href='https://t.me/mladminbot'>Hawkeye</a>\n"
+      #  "‣ ᴜᴘᴅᴀᴛᴇꜱ ᴄʜᴀɴɴᴇʟ : <a href='https://t.me/PrimeXBots'>ᴘʀɪᴍᴇXʙᴏᴛꜱ</a>\n"
+       # "‣ ᴍᴀɪɴ ᴄʜᴀɴɴᴇʟ : <a href='https://t.me/PrimeCineZone'>Pʀɪᴍᴇ Cɪɴᴇᴢᴏɴᴇ</a>\n"
+       # "‣ ѕᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ : <a href='https://t.me/Prime_Support_group'>ᴘʀɪᴍᴇ X ѕᴜᴘᴘᴏʀᴛ</a>\n"
+        #"‣ ᴅᴀᴛᴀ ʙᴀsᴇ : <a href='https://www.mongodb.com/'>ᴍᴏɴɢᴏ ᴅʙ</a>\n"
         "‣ ʙᴏᴛ sᴇʀᴠᴇʀ : <a href='https://heroku.com'>ʜᴇʀᴏᴋᴜ</a>\n"
         "‣ ʙᴜɪʟᴅ sᴛᴀᴛᴜs : ᴠ2.7.1 [sᴛᴀʙʟᴇ]"
     ).format(user_id=cq.from_user.id)
