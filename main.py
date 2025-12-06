@@ -799,7 +799,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
                     label = f"Session {key}"
                 
                 # Creates the two-line, clickable format
-                formatted_line = f"📁 **{label}**\n🔗 **{link}**"
+                formatted_line = f"📁 *{label}*\n🔗 *{link}*"
             
             tv_links.append(formatted_line)
         
@@ -817,13 +817,13 @@ async def generate_channel_caption(convo: dict, user_data: dict):
             # --- Logic for Long Links (Unchanged) ---
             if len(link) > LINK_LENGTH_THRESHOLD:
                 emoji = "🎞️" if quality == "480p" else "📺" if quality == "720p" else "🎥"
-                formatted_line = f"{emoji} [**Download {quality}**]({link})"
+                formatted_line = f"{emoji} [*Download {quality}*]({link})"
             
             # --- New Logic for Short Links (As per your request) ---
             else:
                 # Creates the two-line, clickable format
                 label = quality.upper()
-                formatted_line = f"📁 **{label}**\n🔗 **{link}**"
+                formatted_line = f"📁 *{label}*\n🔗 *{link}*"
             
             movie_links.append(formatted_line)
         
