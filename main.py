@@ -61,7 +61,7 @@ reactions_collection = db["reactions"]
 logger.info("✅ MongoDB database successfully connected.")
 
 # --- Pyrogram Client ---
-app = Client("UltimatePostBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("UltimatePostBot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN, parse_mode=enums.ParseMode.MARKDOWN)
 
 # --- For storing user conversations and data ---
 user_conversations = {}
