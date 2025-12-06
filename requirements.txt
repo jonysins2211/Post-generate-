@@ -1,0 +1,12 @@
+pyrogram
+tgcrypto
+motor
+Flask
+requests
+Pillow
+numpy
+opencv-python-headless
+python-dotenv
+
+thefuzz
+python-levenshtein
