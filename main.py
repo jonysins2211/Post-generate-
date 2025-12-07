@@ -675,7 +675,7 @@ async def generate_final_post_preview(bot, uid, chat_id, status_msg: Message):
         return
 
     inline_keyboard = [
-        #[InlineKeyboardButton("👍 0", callback_data="react_DUMMY_like"), InlineKeyboardButton("❤️ 0", callback_data="react_DUMMY_love")]
+        [InlineKeyboardButton("👍 0", callback_data="react_DUMMY_like"), InlineKeyboardButton("❤️ 0", callback_data="react_DUMMY_love")]
     ]
     for btn in user_data.get("custom_buttons", []):
         inline_keyboard.append([InlineKeyboardButton(btn["text"], url=btn["url"])])
@@ -782,10 +782,10 @@ async def generate_channel_caption(convo: dict, user_data: dict):
                 if is_episode:
                     emoji = "🎬"
                     s, e = key.split('x')
-                    hyperlink_label = f"Download S{s.zfill(2)} E{e.zfill(2)}"
+                    hyperlink_label = f"𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱 S{s.zfill(2)} E{e.zfill(2)}"
                 else:
                     emoji = "📁"
-                    hyperlink_label = f"Download Season {key}"
+                    hyperlink_label = f"𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱 Season {key}"
                 formatted_line = f"{emoji} [{hyperlink_label}]({link})"
             
             # --- New Logic for Short Links (As per your request) ---
@@ -809,15 +809,15 @@ async def generate_channel_caption(convo: dict, user_data: dict):
     # ========== Movie Section (With New Short Link Format) ==========
     else:
         movie_links = []
-        for quality in ["480p", "720p", "1080p"]:
+        for quality in ["𝟒𝟖𝟎𝗽", "𝟳𝟮𝟬𝗽", "𝟭𝟬𝟴𝟬𝗽"]:
             link = links.get(quality)
             if not link:
                 continue
             
             # --- Logic for Long Links (Unchanged) ---
             if len(link) > LINK_LENGTH_THRESHOLD:
-                emoji = "🎞️" if quality == "480p" else "📺" if quality == "720p" else "🎥"
-                formatted_line = f"{emoji} [Download {quality}]({link})"
+                emoji = "🎞️" if quality == "𝟒𝟖𝟎𝗽" else "📺" if quality == "𝟳𝟮𝟬𝗽" else "🎥"
+                formatted_line = f"{emoji} [𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱 {quality}]({link})"
             
             # --- New Logic for Short Links (As per your request) ---
             else:
