@@ -757,7 +757,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
         f"⭐ **IMDb:** `{info['rating']}/10`\n"
         f"🎭 **Genre:** `{info['genres']}`\n"
         f"🈳 **Language:** `{info['language']}`\n"
-        f"⏰ **Runtime:** `{info['runtime']}`\n</blockquote>"
+        f"⏰ **Runtime:** `{info['runtime']}`</blockquote>"
         #f"╚══════════════════════╝"
     )
     download_section_header = "🔰 **Download Links** 🔰"
@@ -785,7 +785,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
                 else:
                     emoji = "📁"
                     hyperlink_label = f"Download Season {key}"
-                formatted_line = f"{emoji} [{hyperlink_label}]({link})"
+                formatted_line = f"<b>{emoji} [{hyperlink_label}]({link})</b>"
             
             # --- New Logic for Short Links (As per your request) ---
             else:
