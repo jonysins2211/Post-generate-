@@ -760,7 +760,6 @@ async def generate_channel_caption(convo: dict, user_data: dict):
         f"⏰ **Runtime:** `{info['runtime']}`\n</blockquote>"
         #f"╚══════════════════════╝"
     )
-
     download_section_header = "🔰 **Download Links** 🔰"
     download_links = ""
     
@@ -817,7 +816,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
             # --- Logic for Long Links (Unchanged) ---
             if len(link) > LINK_LENGTH_THRESHOLD:
                 emoji = "🎞️" if quality == "480p" else "📺" if quality == "720p" else "🎥"
-                formatted_line = f"{emoji} [Download {quality}]({link})"
+                formatted_line = f"<b>{emoji} [Download {quality}]({link})</b>"
             
             # --- New Logic for Short Links (As per your request) ---
             else:
