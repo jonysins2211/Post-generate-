@@ -753,7 +753,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
     }
 
     caption_header = (
-        f"<blockquote>🎬 **{info['title']} ({info['year']})** ══╗\n"
+        f"<blockquote>🎬 **{info['title']} ({info['year']})**\n"
         f"⭐ **IMDb:** `{info['rating']}/10`\n"
         f"🎭 **Genre:** `{info['genres']}`\n"
         f"🈳 **Language:** `{info['language']}`\n"
