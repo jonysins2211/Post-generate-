@@ -188,6 +188,8 @@ def format_runtime(minutes: int):
 # ---------------------------------------------------------------------------
 # 🔹 TMDB API & Smart Poster Generation
 # ---------------------------------------------------------------------------
+# 🔹 TMDB API & Smart Poster Generation
+# ---------------------------------------------------------------------------
 def search_tmdb(query: str):
     """
     Searches TMDB. If no direct results, returns a list of fuzzy suggestions.
@@ -198,14 +200,23 @@ def search_tmdb(query: str):
     
     year, name = None, query.strip()
     match = re.search(r'(.+?)\s*\(?(\d{4})\)?$', query)
-    if match: name, year = match.group(1).strip(), match.group(2)
+    if match:
+        name, year = match.group(1).strip(), match.group(2)
 
     # --- Step 1: Direct Search ---
-    search_url = f"https://api.themoviedb.org/3/search/multi?api_key={TMDB_API_KEY}&query={name}" + (f"&year={year}" if year else "")
+    search_url = (
+        f"https://api.themoviedb.org/3/search/multi"
+        f"?api_key={TMDB_API_KEY}&query={name}"
+        + (f"&year={year}" if year else "")
+    )
+
     try:
         r = requests.get(search_url, timeout=10)
         r.raise_for_status()
-        results = [res for res in r.json().get("results", []) if res.get("media_type") in ["movie", "tv"]]
+        results = [
+            res for res in r.json().get("results", [])
+            if res.get("media_type") in ["movie", "tv"]
+        ]
         
         if results:
             logger.info(f"Direct search successful. Found {len(results)} results.")
@@ -221,7 +232,11 @@ def search_tmdb(query: str):
         fuzzy_search_url = f"https://api.themoviedb.org/3/search/multi?api_key={TMDB_API_KEY}&query={name}"
         r_fuzzy = requests.get(fuzzy_search_url, timeout=10)
         r_fuzzy.raise_for_status()
-        candidates = [res for res in r_fuzzy.json().get("results", []) if res.get("media_type") in ["movie", "tv"]]
+
+        candidates = [
+            res for res in r_fuzzy.json().get("results", [])
+            if res.get("media_type") in ["movie", "tv"]
+        ]
 
         if not candidates:
             return 'NO_RESULTS', []
@@ -230,12 +245,11 @@ def search_tmdb(query: str):
         for candidate in candidates:
             title = candidate.get('title') or candidate.get('name', '')
             score = fuzz.ratio(name.lower(), title.lower())
-            if score > 65:  # মিল ৬৫% এর বেশি হলে তাকে সাজেশন হিসেবে গণ্য করা হবে
+            if score > 65:
                 candidate['fuzzy_score'] = score
                 scored_candidates.append(candidate)
         
         if scored_candidates:
-            # সেরা মিলগুলো উপরে দেখানোর জন্য স্কোর অনুযায়ী সাজানো হলো
             scored_candidates.sort(key=lambda x: x['fuzzy_score'], reverse=True)
             logger.info(f"Found {len(scored_candidates)} suggestions.")
             return 'SUGGESTIONS', scored_candidates[:5]
@@ -245,14 +259,36 @@ def search_tmdb(query: str):
 
     return 'NO_RESULTS', []
 
-        
+
 def get_tmdb_details(media_type: str, media_id: int):
     url = f"https://api.themoviedb.org/3/{media_type}/{media_id}?api_key={TMDB_API_KEY}"
     try:
-        r = requests.get(url, timeout=10); r.raise_for_status(); return r.json()
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        return r.json()
     except Exception as e:
-        logger.error(f"TMDB Details Error: {e}"); return None
+        logger.error(f"TMDB Details Error: {e}")
+        return None
 
+
+# 🔹 LANDSCAPE POSTER (ADDED ONLY)
+# ---------------------------------------------------------------------------
+TMDB_IMG_BASE = "https://image.tmdb.org/t/p/w1280"
+
+
+def get_landscape_poster(details: dict):
+    """
+    Returns TMDB landscape poster (16:9 backdrop)
+    """
+    if not details:
+        return None
+
+    backdrop = details.get("backdrop_path")
+    if backdrop:
+        return f"{TMDB_IMG_BASE}{backdrop}"
+
+    return None
+    
 def download_file(url: str, filename: str):
     if not os.path.exists(filename):
         logger.info(f"Downloading {filename}...")
