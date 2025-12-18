@@ -687,8 +687,13 @@ async def generate_final_post_preview(bot, uid, chat_id, status_msg: Message):
     user_data = await users_collection.find_one({'user_id': uid}) or {}
     
     await status_msg.edit_text("🖼️ Generating smart poster...")
-    poster_url = f"https://image.tmdb.org/t/p/w500{convo['details']['poster_path']}" if convo['details'].get('poster_path') else None
-    
+    poster_url = (
+        get_landscape_poster(convo["details"])
+        or 
+    f"https://image.tmdb.org/t/p/w500{convo['details']['poster_path']}"
+    if convo['details'].get('poster_path')
+    else None
+    )
     badge_text = user_conversations.get(uid, {}).pop('temp_badge_text', None)
     watermark = user_data.get('watermark_text')
     
