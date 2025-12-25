@@ -715,9 +715,9 @@ async def generate_final_post_preview(bot, uid, chat_id, status_msg: Message):
             del user_conversations[uid]
         return
 
-    inline_keyboard = [
-        [InlineKeyboardButton("👍 0", callback_data="react_DUMMY_like"), InlineKeyboardButton("❤️ 0", callback_data="react_DUMMY_love")]
-    ]
+    inline_keyboard = []
+#[InlineKeyboardButton("👍 0", callback_data="react_DUMMY_like"), InlineKeyboardButton("❤️ 0", callback_data="react_DUMMY_love")]
+#love" 
     for btn in user_data.get("custom_buttons", []):
         inline_keyboard.append([InlineKeyboardButton(btn["text"], url=btn["url"])])
 
@@ -911,11 +911,8 @@ async def post_to_channel(bot: Client, user_id: int, channel_id: int, status_mes
             photo=io.BytesIO(final_post['poster']) if final_post['poster'] else "https://via.placeholder.com/500x750.png?text=No+Poster",
             caption=final_post['caption']
         )
-        await reactions_collection.insert_one({"message_id": posted_msg.id, "chat_id": channel_id, "reactions": {"like": [], "love": []}})
-        
-        final_buttons = final_post['buttons']
-        final_buttons[0][0].callback_data = f"react_{posted_msg.id}_like"
-        final_buttons[0][1].callback_data = f"react_{posted_msg.id}_love"
+        await reactions_colle    #    await reactions_collection.insert_one({"message_id": posted_msg.id, "chat_id": channel_id, "reactions": {"like": [], "love": []}})ns = final_post['buttons']
+        final_buttons[0][0].c      #  final_buttons[0][0].callback_data = f"react_{posted_msg.id}_like"callback_data = f"react_{posted_msg.id}_love"
         
         await posted_msg.edit_reply_markup(reply_markup=InlineKeyboardMarkup(final_buttons))
         
@@ -1177,8 +1174,8 @@ async def forward_handler(bot, msg: Message):
 # ---------------------------------------------------------------------------
 # 🔹 Reaction Handler
 # ---------------------------------------------------------------------------
-@app.on_callback_query(filters.regex("^react_"))
-async def reaction_handler(bot, cq: CallbackQuery):
+#@app.on_callback_query(filters.regex("^react_"))
+#async def reaction_handler(bot, cq: CallbackQuery):
     try:
         data_parts = cq.data.split("_", 2)
         if len(data_parts) < 3 or "DUMMY" in data_parts[1]:
