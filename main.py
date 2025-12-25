@@ -887,7 +887,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
     final_parts.append(caption_header)
 
     if download_links:
-        final_parts.append(download_section_header + "\n" + download_links)
+        final_parts.append(download_section_header + "\n\n" + download_links)
     if tutorial_section:
         final_parts.append(tutorial_section)
     
