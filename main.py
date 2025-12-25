@@ -826,7 +826,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
                 else:
                     emoji = "📁"
                     hyperlink_label = f"Download Season {key}"
-                formatted_line = f"<b>{emoji} [{hyperlink_label}]({link})</b>"
+                formatted_line = (f"<b>┣  {quality}  –</b>" f"<a href='{link}'>𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱 𝗛𝗲𝗿𝗲</a>")
             
             # --- New Logic for Short Links (As per your request) ---
             else:
@@ -844,7 +844,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
             tv_links.append(formatted_line)
         
         # Use a double newline to separate each two-line block
-        download_links = "\n\n".join(tv_links)
+        download_links = "\n".join(tv_links)
 
     # ========== Movie Section (With New Short Link Format) ==========
     else:
