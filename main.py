@@ -857,7 +857,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
             # --- Logic for Long Links (Unchanged) ---
             if len(link) > LINK_LENGTH_THRESHOLD:
                 emoji = "🎞️" if quality == "480p" else "📺" if quality == "720p" else "🎥"
-                formatted_line = f"<b>{emoji} [Download {quality}]({link})</b>"
+                formatted_line = (f"<b>┣  {quality}  –</b>" f"<a href='{link}'>𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱 𝗛𝗲𝗿𝗲</a>")
             
             # --- New Logic for Short Links (As per your request) ---
             else:
@@ -868,7 +868,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
             movie_links.append(formatted_line)
         
         # Use a double newline to create space between each entry
-        download_links = "\n\n".join(movie_links)
+        download_links = "\n".join(movie_links)
 
     # --- Tutorial section and final merge (Unchanged) ---
     tutorial_section = ""
