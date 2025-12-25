@@ -911,8 +911,9 @@ async def post_to_channel(bot: Client, user_id: int, channel_id: int, status_mes
             photo=io.BytesIO(final_post['poster']) if final_post['poster'] else "https://via.placeholder.com/500x750.png?text=No+Poster",
             caption=final_post['caption']
         )
-        await reactions_colle    #    await reactions_collection.insert_one({"message_id": posted_msg.id, "chat_id": channel_id, "reactions": {"like": [], "love": []}})ns = final_post['buttons']
-        final_buttons[0][0].c      #  final_buttons[0][0].callback_data = f"react_{posted_msg.id}_like"callback_data = f"react_{posted_msg.id}_love"
+        final_buttons = final_post['buttons']
+      #        #  await reactions_#    await reactions_collection.insert_one({"message_id": posted_msg.id, "chat_id": channel_id, "reactions": {"like": [], "love": []}})ns = final_post['buttons']
+       # final_buttons[0][0].c      #  final_buttons[0][0].callback_data = f"react_{posted_msg.id}_like"callback_data = f"react_{posted_msg.id}_love"
         
         await posted_msg.edit_reply_markup(reply_markup=InlineKeyboardMarkup(final_buttons))
         
