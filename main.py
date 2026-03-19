@@ -261,7 +261,7 @@ def search_tmdb(query: str):
 
 
 def get_tmdb_details(media_type: str, media_id: int):
-    url = f"https://api.themoviedb.org/3/{media_type}/{media_id}?api_key={TMDB_API_KEY}"
+    url = f"https://api.themoviedb.org/3/{media_type}/{media_id}?api_key={TMDB_API_KEY}&append_to_response=images&include_image_language=en,null"
     try:
         r = requests.get(url, timeout=10)
         r.raise_for_status()
@@ -271,21 +271,53 @@ def get_tmdb_details(media_type: str, media_id: int):
         return None
 
 
-# 🔹 LANDSCAPE POSTER (ADDED ONLY)
-# ---------------------------------------------------------------------------
 TMDB_IMG_BASE = "https://image.tmdb.org/t/p/w1280"
 
 
 def get_landscape_poster(details: dict):
     """
-    Returns TMDB landscape poster (16:9 backdrop)
+    Returns best landscape (16:9 backdrop) poster from TMDB.
+    Tries English backdrops first, then any available backdrop.
+    Uses /w1280 for high quality.
     """
     if not details:
         return None
 
+    # Try images.backdrops (high quality, multiple options)
+    images = details.get("images", {})
+    backdrops = images.get("backdrops", [])
+    if backdrops:
+        # Prefer English language backdrops
+        en_backdrops = [b for b in backdrops if b.get("iso_639_1") == "en"]
+        best = en_backdrops[0] if en_backdrops else backdrops[0]
+        return f"{TMDB_IMG_BASE}{best['file_path']}"
+
+    # Fallback to backdrop_path
     backdrop = details.get("backdrop_path")
     if backdrop:
         return f"{TMDB_IMG_BASE}{backdrop}"
+
+    return None
+
+
+def get_portrait_poster(details: dict):
+    """
+    Returns best portrait (2:3) poster from TMDB.
+    Tries English posters first, then any available.
+    """
+    if not details:
+        return None
+
+    images = details.get("images", {})
+    posters = images.get("posters", [])
+    if posters:
+        en_posters = [p for p in posters if p.get("iso_639_1") == "en"]
+        best = en_posters[0] if en_posters else posters[0]
+        return f"{TMDB_IMG_BASE}{best['file_path']}"
+
+    poster = details.get("poster_path")
+    if poster:
+        return f"https://image.tmdb.org/t/p/w500{poster}"
 
     return None
     
@@ -392,8 +424,113 @@ async def watermark_poster(poster_url: str, watermark_text: str, badge_text: str
         executor, _watermark_poster_sync, poster_url, watermark_text, badge_text
     )
 
+# Poster style ratios
+POSTER_STYLES = {
+    "portrait": (2, 3),    # 9:16 → stored as 2:3 (portrait)
+    "landscape": (16, 9),  # 16:9
+    "square": (1, 1),      # 1:1
+}
+
+def _resize_poster_to_style_sync(img_bytes: bytes, style: str) -> bytes:
+    """Crop/resize a poster image to the chosen aspect ratio."""
+    ratio = POSTER_STYLES.get(style, (2, 3))
+    img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+    orig_w, orig_h = img.size
+    target_ratio = ratio[0] / ratio[1]
+    current_ratio = orig_w / orig_h
+
+    if current_ratio > target_ratio:
+        # Too wide — crop sides
+        new_w = int(orig_h * target_ratio)
+        left = (orig_w - new_w) // 2
+        img = img.crop((left, 0, left + new_w, orig_h))
+    else:
+        # Too tall — crop top/bottom
+        new_h = int(orig_w / target_ratio)
+        top = (orig_h - new_h) // 2
+        img = img.crop((0, top, orig_w, top + new_h))
+
+    # Final resize to standard dimensions
+    sizes = {"portrait": (720, 1080), "landscape": (1280, 720), "square": (900, 900)}
+    img = img.resize(sizes.get(style, (720, 1080)), Image.LANCZOS)
+
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    buf.seek(0)
+    return buf.read()
+
+async def resize_poster_to_style(img_bytes: bytes, style: str) -> bytes:
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(executor, _resize_poster_to_style_sync, img_bytes, style)
+
+
+def _apply_watermark_on_bytes(img_bytes: bytes, watermark_text: str, badge_text: str = None) -> bytes:
+    """Apply watermark and badge directly on raw image bytes."""
+    try:
+        img = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
+        draw = ImageDraw.Draw(img)
+        bold_font_path = "Poppins-Bold.ttf"
+        badge_font_path = "HindSiliguri-Bold.ttf"
+
+        if badge_text:
+            try:
+                badge_font = ImageFont.truetype(badge_font_path, int(img.width / 9))
+                bbox = draw.textbbox((0, 0), badge_text, font=badge_font)
+                tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+                x, y = (img.width - tw) / 2, img.height * 0.03
+                padding = int(img.width / 9 * 0.1)
+                rect_layer = Image.new('RGBA', img.size, (0, 0, 0, 0))
+                ImageDraw.Draw(rect_layer).rectangle(
+                    (x - padding, y - padding, x + tw + padding, y + th + padding),
+                    fill=(0, 0, 0, 140)
+                )
+                img = Image.alpha_composite(img, rect_layer)
+                draw = ImageDraw.Draw(img)
+                draw.text((x, y), badge_text, font=badge_font, fill=(255, 255, 0))
+            except Exception as e:
+                logger.error(f"Badge error: {e}")
+
+        if watermark_text:
+            try:
+                font = ImageFont.truetype(bold_font_path, int(img.width / 12))
+                bbox = draw.textbbox((0, 0), watermark_text, font=font)
+                tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+                wx = (img.width - tw) / 2
+                wy = img.height - th - (img.height * 0.05)
+                draw.text((wx + 2, wy + 2), watermark_text, font=font, fill=(0, 0, 0, 128))
+                draw.text((wx, wy), watermark_text, font=font, fill=(255, 255, 255, 230))
+            except Exception as e:
+                logger.error(f"Watermark error: {e}")
+
+        buf = io.BytesIO()
+        img.convert("RGB").save(buf, "PNG")
+        return buf.getvalue()
+    except Exception as e:
+        logger.error(f"_apply_watermark_on_bytes error: {e}")
+        return img_bytes
+
+
 # ---------------------------------------------------------------------------
-# 🔹 Start & General Command Handlers
+# 🔹 Custom Poster Upload Handler
+# ---------------------------------------------------------------------------
+@app.on_message(filters.private & filters.photo & ~filters.forwarded)
+async def photo_handler(bot, msg: Message):
+    """Handles photo uploads — either custom poster or direct media post."""
+    uid = msg.from_user.id
+    convo = user_conversations.get(uid)
+
+    # If user is in post creation flow — treat photo as custom poster
+    if convo and convo.get("state") in ["wait_lang", "wait_480p", "wait_720p", "wait_1080p",
+                                         "wait_season_number", "ask_episode_or_done",
+                                         "wait_season_link", "wait_episode_link"]:
+        await msg.reply_text("🖼️ Custom poster received! It will be used for your post.")
+        photo = msg.photo
+        file = await bot.download_media(photo.file_id, in_memory=True)
+        convo["custom_poster_bytes"] = bytes(file.getbuffer())
+        return
+
+    # Otherwise handle as direct media post (existing logic)
+    await direct_media_handler(bot, msg)
 # ---------------------------------------------------------------------------
 @app.on_message(filters.private & filters.command("start"))
 async def start_handler(bot, msg: Message):
@@ -469,7 +606,8 @@ ALL_COMMANDS = [
     "setdomain", "deldomain", 
     "settutorial", "deltutorial", 
     "badge", "delbadge",
-    "settings", "stats", "broadcast", "help"
+    "settings", "stats", "broadcast", "help",
+    "posterstyle", "setposterstyle"
 ]
 
 @app.on_message(filters.private & filters.text & ~filters.command(ALL_COMMANDS) & ~filters.forwarded)
@@ -687,18 +825,21 @@ async def generate_final_post_preview(bot, uid, chat_id, status_msg: Message):
     user_data = await users_collection.find_one({'user_id': uid}) or {}
     
     await status_msg.edit_text("🖼️ Generating smart poster...")
-    poster_url = (
-        get_landscape_poster(convo["details"])
-        or 
-    f"https://image.tmdb.org/t/p/w500{convo['details']['poster_path']}"
-    if convo['details'].get('poster_path')
-    else None
-    )
+
+    # Select best poster based on user's poster style preference
+    poster_style = user_data.get("poster_style", "portrait")
+    details = convo["details"]
+
+    if poster_style == "landscape":
+        poster_url = get_landscape_poster(details) or get_portrait_poster(details)
+    else:
+        poster_url = get_portrait_poster(details) or get_landscape_poster(details)
+
     badge_text = user_conversations.get(uid, {}).pop('temp_badge_text', None)
     watermark = user_data.get('watermark_text')
-    
+
     poster, error = await watermark_poster(poster_url, watermark, badge_text=badge_text)
-    
+
     if error: await bot.send_message(chat_id, f"⚠️ **Poster generation error:** `{error}`")
 
     await status_msg.edit_text("📝 Generating caption and buttons...")
@@ -1301,6 +1442,7 @@ async def navigation_handler(bot, cq: CallbackQuery):
             "**╒═══「 ᴘᴏꜱᴛᴇʀ ᴄᴜꜱᴛᴏᴍɪᴢᴀᴛɪᴏɴ 」**\n"
             "├ `/setwatermark` - ꜱᴇᴛ ᴀ ᴡᴀᴛᴇʀᴍᴀʀᴋ 💧\n"
             "├ `/delwatermark` - ʀᴇᴍᴏᴠᴇ ʏᴏᴜʀ ᴡᴀᴛᴇʀᴍᴀʀᴋ 🚫\n"
+            "└ `/posterstyle` - ᴄʜᴏᴏꜱᴇ ᴘᴏꜱᴛᴇʀ ꜱᴛʏʟᴇ 🖼️\n"
             
             "**╒═══「 ʟɪɴᴋ ꜱʜᴏʀᴛᴇɴᴇʀ 」**\n"
             "├ `/setapi` - ꜱᴇᴛ ꜱʜᴏʀᴛᴇɴᴇʀ ᴀᴘɪ ᴋᴇʏ 🔑\n"
@@ -1561,8 +1703,9 @@ async def button_commands(bot: Client, msg: Message):
         await msg.reply_text("🗑️ All custom buttons have been deleted!")
 
 @app.on_message(filters.private & filters.command([
-    "setwatermark", "delwatermark", "setapi", "delapi", "setdomain", "deldomain", 
-    "settutorial", "deltutorial", "settings", "badge", "delbadge"
+    "setwatermark", "delwatermark", "setapi", "delapi", "setdomain", "deldomain",
+    "settutorial", "deltutorial", "settings", "badge", "delbadge",
+    "posterstyle", "setposterstyle"
 ]))
 async def settings_commands(bot: Client, msg: Message):
     command = msg.command[0].lower()
@@ -1625,6 +1768,21 @@ async def settings_commands(bot: Client, msg: Message):
     elif command == "delbadge":
         user_conversations.get(user_id, {}).pop('temp_badge_text', None)
         await msg.reply_text("🗑️ One-time badge text removed.")
+
+    elif command in ("posterstyle", "setposterstyle"):
+        current = (await users_collection.find_one({"user_id": user_id}) or {}).get("poster_style", "portrait")
+        style_map = {"portrait": "🖼️ Portrait (9:16)", "landscape": "🌄 Landscape (16:9)", "square": "⬛ Square (1:1)"}
+        buttons = []
+        for key, label in style_map.items():
+            marker = " ✓" if key == current else ""
+            buttons.append([InlineKeyboardButton(f"{label}{marker}", callback_data=f"set_poster_style_{key}")])
+        buttons.append([InlineKeyboardButton("❌ Cancel", callback_data="cancel_process")])
+        await msg.reply_text(
+            f"🖼️ **Poster Style Selector**\n\n"
+            f"Current style: **{style_map.get(current, 'Portrait')}**\n\n"
+            "Choose a style for your posts:",
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
         
     elif command == "settings":
         # We can reuse the navigation handler for a consistent UI
@@ -1647,6 +1805,21 @@ async def owner_commands(bot: Client, msg: Message):
             try: await msg.reply_to_message.copy(user_doc["user_id"]); sent += 1
             except Exception: failed += 1
         await status_msg.edit_text(f"✅ **Broadcast complete!**\n\n📤 **Sent:** {sent}\n❌ **Failed:** {failed}")
+
+@app.on_callback_query(filters.regex("^set_poster_style_"))
+async def poster_style_callback(bot: Client, cq: CallbackQuery):
+    """Handle poster style selection button."""
+    style = cq.data.replace("set_poster_style_", "")
+    user_id = cq.from_user.id
+    style_map = {"portrait": "🖼️ Portrait (9:16)", "landscape": "🌄 Landscape (16:9)", "square": "⬛ Square (1:1)"}
+    if style not in style_map:
+        return await cq.answer("❌ Invalid style.", show_alert=True)
+    await users_collection.update_one(
+        {"user_id": user_id}, {"$set": {"poster_style": style}}, upsert=True
+    )
+    await cq.answer(f"✅ Poster style set to {style_map[style]}!", show_alert=True)
+    await cq.message.edit_text(f"✅ **Poster style updated!**\n\nNew style: **{style_map[style]}**\n\nAll future posts will use this style.")
+
 
 @app.on_callback_query(filters.regex("^(delch_|delbtn_)"))
 async def delete_callback_handler(bot: Client, cq: CallbackQuery):
