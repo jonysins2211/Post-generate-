@@ -1177,8 +1177,8 @@ async def forward_handler(bot, msg: Message):
 # ---------------------------------------------------------------------------
 # 🔹 Reaction Handler
 # ---------------------------------------------------------------------------
-#@app.on_callback_query(filters.regex("^react_"))
-#async def reaction_handler(bot, cq: CallbackQuery):
+@app.on_callback_query(filters.regex("^react_"))
+async def reaction_handler(bot, cq: CallbackQuery):
     try:
         data_parts = cq.data.split("_", 2)
         if len(data_parts) < 3 or "DUMMY" in data_parts[1]:
@@ -1190,21 +1190,20 @@ async def forward_handler(bot, msg: Message):
         post = await reactions_collection.find_one({"message_id": msg_id})
         if not post:
             return await cq.answer("Sorry, reaction data for this post not found.", show_alert=True)
-        
-        # Toggle logic
+
         other_reaction = "love" if reaction == "like" else "like"
         current_reaction_users = post["reactions"].get(reaction, [])
         other_reaction_users = post["reactions"].get(other_reaction, [])
 
         if user_id in current_reaction_users:
-            current_reaction_users.remove(user_id) # Un-react
+            current_reaction_users.remove(user_id)
         else:
             if user_id in other_reaction_users:
-                other_reaction_users.remove(user_id) # Switch reaction
-            current_reaction_users.append(user_id) # Add new reaction
-        
+                other_reaction_users.remove(user_id)
+            current_reaction_users.append(user_id)
+
         await reactions_collection.update_one(
-            {"message_id": msg_id}, 
+            {"message_id": msg_id},
             {"$set": {f"reactions.{reaction}": current_reaction_users, f"reactions.{other_reaction}": other_reaction_users}}
         )
 
@@ -1216,7 +1215,7 @@ async def forward_handler(bot, msg: Message):
             InlineKeyboardButton(f"👍 {like_count}", callback_data=f"react_{msg_id}_like"),
             InlineKeyboardButton(f"❤️ {love_count}", callback_data=f"react_{msg_id}_love")
         ]
-        
+
         await cq.message.edit_reply_markup(reply_markup=InlineKeyboardMarkup(current_keyboard))
         await cq.answer("✅ Your reaction has been updated!", show_alert=False)
 
@@ -1443,7 +1442,7 @@ async def refresh_callback(bot, cq: CallbackQuery):
 async def channel_management(bot: Client, msg: Message):
     if AUTH_CHANNEL:
         try:
-            btn = await is_subscribed(client, message, AUTH_CHANNEL)
+            btn = await is_subscribed(bot, msg.from_user.id)
             if btn:
                 username = (await client.get_me()).username
                 if len(message.command) > 1:
@@ -1669,3 +1668,4 @@ if __name__ == "__main__":
     logger.info("✅ Bot is starting...")
     app.run()
     logger.info("👋 Bot has stopped.")
+
