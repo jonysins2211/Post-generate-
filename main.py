@@ -947,7 +947,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
         if single_files_links or episode_wise_links:
             link_parts = []
             if single_files_links:
-                sf = "<blockquote><b>📂 SINGLE FILES :</b>\n" + "\n".join(single_files_links)
+                sf = "<blockquote><b>📂 SINGLE FILES :</b></blockquote>\n" + "\n".join(single_files_links)
                 link_parts.append(sf)
             if episode_wise_links:
                 ew = "<blockquote><b>⚡️ EPISODE WISE :</b></blockquote>\n" + "\n".join(episode_wise_links)
