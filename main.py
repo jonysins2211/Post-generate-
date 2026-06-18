@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 
 # ---------------------------------------------------------------------------
@@ -799,19 +800,32 @@ async def generate_final_post_preview(bot, uid, chat_id, status_msg: Message):
     
     await status_msg.edit_text("🖼️ Generating smart poster...")
 
-    # Select best poster based on user's poster style preference
-    poster_style = user_data.get("poster_style", "portrait")
-    details = convo["details"]
-
-    if poster_style == "landscape":
-        poster_url = get_landscape_poster(details) or get_portrait_poster(details)
-    else:
-        poster_url = get_portrait_poster(details) or get_landscape_poster(details)
-
     badge_text = user_conversations.get(uid, {}).pop('temp_badge_text', None)
     watermark = user_data.get('watermark_text')
 
-    poster, error = await watermark_poster(poster_url, watermark, badge_text=badge_text)
+    # ── Use custom poster if user uploaded one, otherwise fetch from TMDB ──
+    custom_poster_bytes = convo.pop("custom_poster_bytes", None)
+
+    if custom_poster_bytes:
+        # Apply watermark/badge on the custom poster bytes directly
+        loop = asyncio.get_running_loop()
+        processed_bytes = await loop.run_in_executor(
+            executor, _apply_watermark_on_bytes, custom_poster_bytes, watermark or "", badge_text
+        )
+        poster = io.BytesIO(processed_bytes)
+        poster.name = "poster.png"
+        error = None
+    else:
+        # Select best poster based on user's poster style preference
+        poster_style = user_data.get("poster_style", "portrait")
+        details = convo["details"]
+
+        if poster_style == "landscape":
+            poster_url = get_landscape_poster(details) or get_portrait_poster(details)
+        else:
+            poster_url = get_portrait_poster(details) or get_landscape_poster(details)
+
+        poster, error = await watermark_poster(poster_url, watermark, badge_text=badge_text)
 
     if error: await bot.send_message(chat_id, f"⚠️ **Poster generation error:** `{error}`")
 
@@ -947,7 +961,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
         if single_files_links or episode_wise_links:
             link_parts = []
             if single_files_links:
-                sf = "<blockquote><b>📂 SINGLE FILES :</b></blockquote>\n" + "\n".join(single_files_links)
+                sf = "<blockquote><b> 📂 SINGLE FILES :</b></blockquote>\n" + "\n".join(single_files_links)
                 link_parts.append(sf)
             if episode_wise_links:
                 ew = "<blockquote><b>⚡️ EPISODE WISE :</b></blockquote>\n" + "\n".join(episode_wise_links)
@@ -1791,5 +1805,4 @@ if __name__ == "__main__":
     logger.info("✅ Bot is starting...")
     app.run()
     logger.info("👋 Bot has stopped.")
-
 
