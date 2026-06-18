@@ -859,7 +859,8 @@ async def generate_final_post_preview(bot, uid, chat_id, status_msg: Message):
         chat_id=chat_id,
         photo=poster if poster else "https://via.placeholder.com/500x750.png?text=No+Poster",
         caption=caption,
-    reply_markup=reply_markup
+        parse_mode=enums.ParseMode.HTML,
+        reply_markup=reply_markup
     )
     
     
@@ -946,7 +947,7 @@ async def generate_channel_caption(convo: dict, user_data: dict):
         if single_files_links or episode_wise_links:
             link_parts = []
             if single_files_links:
-                sf = "<blockquote><b>📂 SINGLE FILES :</b></blockquote>\n" + "\n".join(single_files_links)
+                sf = "<blockquote><b>📂 SINGLE FILES :</b>\n" + "\n".join(single_files_links)
                 link_parts.append(sf)
             if episode_wise_links:
                 ew = "<blockquote><b>⚡️ EPISODE WISE :</b></blockquote>\n" + "\n".join(episode_wise_links)
@@ -973,13 +974,14 @@ async def generate_channel_caption(convo: dict, user_data: dict):
         )
         final_parts.append(info_block)
 
-        download_block = f"━━━━━ ⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜𝗡𝗞 ⬇️ ━━━━━"
         if movie_link:
-            download_block += f"\n\n{movie_link}"
+            download_block = f"<a href='{movie_link}'>━━━━━ ⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜𝗡𝗞 ⬇️ ━━━━━</a>"
+        else:
+            download_block = "━━━━━ ⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜𝗡𝗞 ⬇️ ━━━━━"
         final_parts.append(download_block)
 
         if tutorial_section:
-            final_parts.append(f"<blockquote><b>{tutorial_section}>/b></blockquote>")
+            final_parts.append(f"<blockquote><b>{tutorial_section}</b></blockquote>")
 
     if custom_footer:
         final_parts.append(custom_footer)
@@ -999,7 +1001,8 @@ async def post_to_channel(bot: Client, user_id: int, channel_id: int, status_mes
         posted_msg = await bot.send_photo(
             chat_id=channel_id,
             photo=io.BytesIO(final_post['poster']) if final_post['poster'] else "https://via.placeholder.com/500x750.png?text=No+Poster",
-            caption=final_post['caption']
+            caption=final_post['caption'],
+            parse_mode=enums.ParseMode.HTML
         )
         final_buttons = final_post['buttons']
       #        #  await reactions_#    await reactions_collection.insert_one({"message_id": posted_msg.id, "chat_id": channel_id, "reactions": {"like": [], "love": []}})ns = final_post['buttons']
