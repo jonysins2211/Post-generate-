@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 
 # ---------------------------------------------------------------------------
@@ -520,9 +521,10 @@ async def photo_handler(bot, msg: Message):
     convo = user_conversations.get(uid)
 
     # If user is in post creation flow — treat photo as custom poster
-    if convo and convo.get("state") in ["wait_lang", "wait_480p", "wait_720p", "wait_1080p",
+    if convo and convo.get("state") in ["wait_lang", "wait_movie_link",
                                          "wait_season_number", "ask_episode_or_done",
-                                         "wait_season_link", "wait_episode_link"]:
+                                         "wait_season_link", "wait_episode_link",
+                                         "wait_single_files", "wait_episode_wise"]:
         await msg.reply_text("🖼️ Custom poster received! It will be used for your post.")
         photo = msg.photo
         file = await bot.download_media(photo.file_id, in_memory=True)
@@ -626,9 +628,10 @@ async def post_creation_entry(bot, msg: Message):
     if convo:
         # These are the states where the bot is actively waiting for a specific text input.
         active_input_states = [
-            "wait_lang", "wait_480p", "wait_720p", "wait_1080p", 
+            "wait_lang", "wait_movie_link",
             "wait_season_number", "ask_episode_or_done", 
-            "wait_season_link", "wait_episode_link"
+            "wait_season_link", "wait_episode_link",
+            "wait_single_files", "wait_episode_wise"
         ]
         
         # If the user is in one of the active input states, let the conversation_handler manage the text.
@@ -692,12 +695,26 @@ async def select_post_callback(bot, cq: CallbackQuery):
         return await cq.message.edit_text("❌ Failed to get details from TMDB.")
 
     uid = cq.from_user.id
-    user_conversations[uid] = {"details": details, "links": {}, "seasons": {}, "state": "wait_lang"}
+    media_type_detected = "movie" if "release_date" in details else "tv"
+    user_conversations[uid] = {
+        "details": details,
+        "links": {},
+        "seasons": {},
+        "single_files_links": [],
+        "episode_wise_links": [],
+        "state": "wait_lang"
+    }
     
-    await cq.message.edit_text(
-        f"✅ Selected: **{details.get('title') or details.get('name')}**\n\n"
-        f"💬 Enter the language for the post (e.g., Bengali, Hindi), or type **skip** to use the default (`{details.get('original_language')}`)."
-    )
+    if media_type_detected == "tv":
+        await cq.message.edit_text(
+            f"✅ Selected: **{details.get('title') or details.get('name')}**\n\n"
+            f"💬 Enter the **language** for the post (e.g., Telugu, Hindi, Tamil), or type `skip` to use default."
+        )
+    else:
+        await cq.message.edit_text(
+            f"✅ Selected: **{details.get('title') or details.get('name')}**\n\n"
+            f"💬 Enter the **language** for the post (e.g., Telugu, Hindi, Tamil), or type `skip` to use default."
+        )
 
 # ========================= 🧩 BLOCK 1: conversation_handler() =========================
 
@@ -712,108 +729,65 @@ async def conversation_handler(bot, msg: Message):
     media_type = "movie" if "release_date" in convo["details"] else "tv"
 
     async def finish_and_generate_post(final_msg_text: str):
-        """Helper to finalize link collection and start post generation."""
-        if not convo.get('seasons'):
-            if uid in user_conversations: del user_conversations[uid]
-            return await msg.reply_text("❌ No links were added. Process cancelled.")
-        
-        convo['links'] = convo.get('seasons', {})
+        """Helper to finalize and start post generation."""
         convo["state"] = "generating_post"
         status_msg = await msg.reply_text(final_msg_text)
         await generate_final_post_preview(bot, uid, msg.chat.id, status_msg)
 
-    async def process_link(quality: str, next_state: str, next_prompt: str):
-        """Handles movie quality link inputs with shortener support"""
-        if text.lower() != 'skip':
-            shortened = await shorten_link(uid, text)
-            convo["links"][quality] = shortened
-            await msg.reply_text(f"✅ {quality} link added.")
-        else:
-            await msg.reply_text(f"☑️ {quality} link skipped.")
-        convo["state"] = next_state
-        await msg.reply_text(next_prompt)
 
     # ========== Language Setup ==========
     if state == "wait_lang":
         convo["language"] = text.capitalize() if text.lower() != 'skip' else convo["details"].get('original_language', 'en').capitalize()
 
         if media_type == "movie":
-            convo["state"] = "wait_480p"
-            await msg.reply_text("✅ Language set. Now send the **480p** link or type `skip`.")
+            convo["state"] = "wait_movie_link"
+            await msg.reply_text("✅ Language set. Now send the **download link** for this movie.")
         else:
-            convo["state"] = "wait_season_number"
-            await msg.reply_text("✅ Language set. Now enter the **Season number** (e.g., 1, 2).")
+            # Web Series: go to single files step
+            convo["state"] = "wait_single_files"
+            await msg.reply_text(
+                "✅ Language set.\n\n"
+                "📁 **SINGLE FILES LINK:**\n"
+                "Send the **Single Files** download link, or type `skip` to skip this section."
+            )
 
     # ========== Movie Section ==========
-    elif state == "wait_480p":
-        await process_link("480p", "wait_720p", "Now send the **720p** link or type `skip`.")
-
-    elif state == "wait_720p":
-        await process_link("720p", "wait_1080p", "Now send the **1080p** link or type `skip`.")
-
-    elif state == "wait_1080p":
-        if text.lower() != 'skip':
-            convo["links"]["1080p"] = await shorten_link(uid, text)
+    elif state == "wait_movie_link":
+        shortened = await shorten_link(uid, text)
+        convo["links"]["movie"] = shortened
         convo["state"] = "generating_post"
-        status_msg = await msg.reply_text("✅ All info collected. Generating post...")
+        status_msg = await msg.reply_text("✅ Link received. Generating post...")
         await generate_final_post_preview(bot, uid, msg.chat.id, status_msg)
 
-    # ========== TV Series Section ==========
-    elif state == "wait_season_number":
-        if text.lower() == 'skip':
-            return await finish_and_generate_post("✅ Link collection skipped. Generating post...")
-        
-        if text.lower() == 'done':
-            return await finish_and_generate_post("✅ All season info collected. Generating post...")
-
-        if not text.isdigit() or int(text) <= 0:
-            return await msg.reply_text("❌ Invalid number. Please enter a correct season number.")
-
-        convo['current_season'] = text
-        convo['state'] = 'ask_episode_or_done'
-        await msg.reply_text(
-            f"✅ Season {text} selected.\n\n"
-            "**What's next?**\n"
-            "🔹 To add episodes, enter the **Episode number** (e.g., `5`).\n"
-            "🔹 To add a link for the whole season, type `done`.\n"
-            "🔹 To finish adding links now, type `skip`."
-        )
-
-    elif state == "ask_episode_or_done":
-        if text.lower() == 'skip':
-            return await finish_and_generate_post("✅ Link collection skipped. Generating post...")
-
-        if text.lower() == 'done':
-            convo['state'] = 'wait_season_link'
-            await msg.reply_text(f"👉 Send the **download link** for Season {convo['current_season']}.")
-        elif text.isdigit():
-            convo['current_episode'] = text
-            convo['state'] = 'wait_episode_link'
-            await msg.reply_text(f"🎬 Now send the **link for Season {convo['current_season']} Episode {text}**.")
+    # ========== Web Series: Single Files Step ==========
+    elif state == "wait_single_files":
+        if text.lower() == 'skip' or text.lower() == 'done':
+            # 'skip' with no links, or 'done' after adding some → go to episode wise
+            convo["state"] = "wait_episode_wise"
+            await msg.reply_text(
+                "📺 **EPISODE WISE LINK:**\n"
+                "Send the **Episode Wise** download link, or type `skip` to generate the post now."
+            )
         else:
-            await msg.reply_text("⚠️ Invalid input. Enter an episode number (e.g., `5`), `done`, or `skip`.")
+            shortened = await shorten_link(uid, text)
+            convo.setdefault("single_files_links", []).append(shortened)
+            await msg.reply_text(
+                "✅ Single Files link added.\n\n"
+                "Send another Single Files link, type `done` to move to Episode Wise, or `skip` to skip Episode Wise too and generate post directly."
+            )
 
-    elif state == "wait_season_link":
-        season_num = convo.get('current_season')
-        shortened = await shorten_link(uid, text)
-        convo.setdefault('seasons', {})[season_num] = shortened
-        convo['state'] = 'wait_season_number'
-        await msg.reply_text(
-            f"✅ Link for Season {season_num} added.\n\n"
-            "👉 Enter next season number, type `done` to finish, or `skip` to generate the post now."
-        )
-
-    elif state == "wait_episode_link":
-        season_num = convo.get('current_season')
-        episode_num = convo.get('current_episode')
-        shortened = await shorten_link(uid, text)
-        key = f"{season_num}x{episode_num}"  # Season 1 Episode 5 → 1x5
-        convo.setdefault('seasons', {})[key] = shortened
-        convo['state'] = 'ask_episode_or_done'
-        await msg.reply_text(
-            f"✅ Link for **Season {season_num} Episode {episode_num}** added.\n\n"
-            "👉 Enter the next episode number, type `done` to move to the next season, or `skip` to generate the post now."
-    )
+    # ========== Web Series: Episode Wise Step ==========
+    elif state == "wait_episode_wise":
+        if text.lower() == 'skip' or text.lower() == 'done':
+            # Generate post with whatever we have
+            await finish_and_generate_post("✅ All info collected. Generating post...")
+        else:
+            shortened = await shorten_link(uid, text)
+            convo.setdefault("episode_wise_links", []).append(shortened)
+            await msg.reply_text(
+                "✅ Episode Wise link added.\n\n"
+                "Send another Episode Wise link, or type `done` / `skip` to generate the post."
+            )
 
 # ---------------------------------------------------------------------------
 # 🔹 Final Post Preview & Posting
@@ -857,8 +831,18 @@ async def generate_final_post_preview(bot, uid, chat_id, status_msg: Message):
         return
 
     inline_keyboard = []
-#[InlineKeyboardButton("👍 0", callback_data="react_DUMMY_like"), InlineKeyboardButton("❤️ 0", callback_data="react_DUMMY_love")]
-#love" 
+
+    # ── 🚀 GET YOUR FILES button — always first ──────────────────────────────
+    is_tv = "first_air_date" in convo.get("details", {})
+    if is_tv:
+        all_links = convo.get("single_files_links", []) + convo.get("episode_wise_links", [])
+        get_files_url = all_links[0] if all_links else None
+    else:
+        get_files_url = convo.get("links", {}).get("movie")
+
+    if get_files_url:
+        inline_keyboard.append([InlineKeyboardButton("🚀 𝗚𝗘𝗧 𝗬𝗢𝗨𝗥 𝗙𝗜𝗟𝗘𝗦 🚀", url=get_files_url)])
+
     for btn in user_data.get("custom_buttons", []):
         inline_keyboard.append([InlineKeyboardButton(btn["text"], url=btn["url"])])
 
@@ -921,119 +905,81 @@ async def generate_final_post_preview(bot, uid, chat_id, status_msg: Message):
 # ========================= 🧩 BLOCK 2: generate_channel_caption() =========================
 async def generate_channel_caption(convo: dict, user_data: dict):
     data = convo["details"]
-    links = convo["links"]
     is_tv = "first_air_date" in data
 
     custom_header = user_data.get('custom_header')
     custom_footer = user_data.get('custom_footer')
 
-    info = {
-        "title": data.get("title") or data.get("name") or "N/A",
-        "year": (data.get("release_date") or data.get("first_air_date") or "----")[:4],
-        "genres": ", ".join([g["name"] for g in data.get("genres", [])[:3]]) or "N/A",
-        "rating": f"{data.get('vote_average', 0):.1f}",
-        "language": convo.get('language', 'N/A'),
-        "runtime": format_runtime(data.get("runtime") if not is_tv else (data.get("episode_run_time") or [0])[0]),
-    }
+    title = data.get("title") or data.get("name") or "N/A"
+    year = (data.get("release_date") or data.get("first_air_date") or "----")[:4]
+    genres = ", ".join([g["name"] for g in data.get("genres", [])[:3]]) or "N/A"
+    rating = f"{data.get('vote_average', 0):.1f}"
+    language = convo.get('language', 'N/A')
 
-    caption_header = (
-        f"<blockquote>🎬 **{info['title']} ({info['year']})**\n"
-        f"⭐ **IMDb:** `{info['rating']}/10`\n"
-        f"🎭 **Genre:** `{info['genres']}`\n"
-        f"🈳 **Language:** `{info['language']}`\n"
-        f"⏰ **Runtime:** `{info['runtime']}`</blockquote>"
-        #f"╚══════════════════════╝"
-    )
-    download_section_header = "🔰 **Download Links** 🔰"
-    download_links = ""
-    
-    LINK_LENGTH_THRESHOLD = 32
-
-    # ========== TV Series Section (With New Short Link Format) ==========
-    if is_tv:
-        tv_links = []
-        sorted_keys = sorted(links.keys(), key=lambda k: tuple(map(int, k.split('x'))) if 'x' in k else (int(k), -1))
-        
-        for key in sorted_keys:
-            link = links.get(key)
-            if not link:
-                continue
-
-            # --- Logic for Long Links (Unchanged) ---
-            if len(link) > LINK_LENGTH_THRESHOLD:
-                is_episode = 'x' in key
-                if is_episode:
-                    emoji = "🎬"
-                    s, e = key.split('x')
-                    hyperlink_label = f"Download S{s.zfill(2)} E{e.zfill(2)}"
-                else:
-                    emoji = "📁"
-                    hyperlink_label = f"Download Season {key}"
-                formatted_line = f"<b>{emoji} [{hyperlink_label}]({link})</b>"
-            
-            # --- New Logic for Short Links (As per your request) ---
-            else:
-                is_episode = 'x' in key
-                if is_episode:
-                    s, e = key.split('x')
-                    # Using "Session" as you requested in the example
-                    label = f"Session {s} Episode {e}"
-                else:
-                    label = f"Session {key}"
-                
-                # Creates the two-line, clickable format
-                formatted_line = f"📁 {label}\n🔗 {link}"
-            
-            tv_links.append(formatted_line)
-        
-        # Use a double newline to separate each two-line block
-        download_links = "\n".join(tv_links)
-
-    # ========== Movie Section (With New Short Link Format) ==========
-    else:
-        movie_links = []
-        for quality in ["480p", "720p", "1080p"]:
-            link = links.get(quality)
-            if not link:
-                continue
-            
-            # --- Logic for Long Links (Unchanged) ---
-            if len(link) > LINK_LENGTH_THRESHOLD:
-                emoji = "🎞️" if quality == "480p" else "📺" if quality == "720p" else "🎥"
-                formatted_line = (f"<b>┣  {quality}  –</b>" f"<a href='{link}'>𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱 𝗛𝗲𝗿𝗲</a>")
-            
-            # --- New Logic for Short Links (As per your request) ---
-            else:
-                # Creates the two-line, clickable format
-                label = quality.upper()
-                formatted_line = f"📁 {label}\n🔗{link}"
-            
-            movie_links.append(formatted_line)
-        
-        # Use a double newline to create space between each entry
-        download_links = "\n".join(movie_links)
-
-    # --- Tutorial section and final merge (Unchanged) ---
+    # ── Tutorial section ─────────────────────────────────────────────────────
     tutorial_section = ""
     if user_data.get('tutorial_link'):
         tutorial_url = user_data['tutorial_link']
         tutorial_section = (
             "╭━❰📚 ʜᴏᴡ ᴛᴏ ᴏᴘᴇɴ ʟɪɴᴋꜱ ᴛᴜᴛᴏʀɪᴀʟ ❱━⊱\n"
-            f"┃    <a href='{tutorial_url}'>📥 𝗪𝗔𝗧𝗖𝗛 𝗧𝗨𝗧ᴏʀɪᴀʟ ɴᴏᴡ ▶️</a>\n"
+            f"┃    ▶️ <a href='{tutorial_url}'>𝗪𝗔𝗧𝗖𝗛 𝗧𝗨𝗧𝗢𝗥𝗜𝗔𝗟 𝗡𝗢𝗪 ▶️</a>\n"
             "╰━━━━━━━━━━━━━━━━⊱"
         )
-    
+
     final_parts = []
     if custom_header:
         final_parts.append(custom_header)
-    
-    final_parts.append(caption_header)
 
-    if download_links:
-        final_parts.append(download_section_header + "\n\n" + download_links)
-    if tutorial_section:
-        final_parts.append(tutorial_section)
-    
+    if is_tv:
+        # ── Web Series Format ─────────────────────────────────────────────
+        single_files_links = convo.get("single_files_links", [])
+        episode_wise_links = convo.get("episode_wise_links", [])
+
+        info_block = (
+            f"<blockquote>🎬 {title} ({year})\n"
+            f"━━━━━━━━━━━━━━━━━━\n"
+            f"⭐️ Rating ∥ {rating}/10\n"
+            f"🎭 Genres ∥ {genres}\n"
+            f"🈳 Languages : {language}</blockquote>"
+        )
+        final_parts.append(info_block)
+
+        if single_files_links or episode_wise_links:
+            link_parts = []
+            if single_files_links:
+                sf = "SINGLE FILES :\n" + "\n".join(single_files_links)
+                link_parts.append(sf)
+            if episode_wise_links:
+                ew = "EPISODE WISE :\n" + "\n".join(episode_wise_links)
+                link_parts.append(ew)
+            final_parts.append("\n\n".join(link_parts))
+
+        if tutorial_section:
+            final_parts.append(f"<blockquote>{tutorial_section}</blockquote>")
+
+    else:
+        # ── Movie Format ──────────────────────────────────────────────────
+        runtime_raw = data.get("runtime", 0)
+        runtime = format_runtime(runtime_raw) if runtime_raw else "N/A"
+        links = convo.get("links", {})
+        movie_link = links.get("movie", "")
+
+        info_block = (
+            f"<blockquote>🎬 {title} ({year})\n"
+            f"━━━━━━━━━━━━━━━━━━\n"
+            f"⭐️ Rating ∥ {rating}/10\n"
+            f"🎭 Genres ∥ {genres}\n"
+            f"🈳 Languages : {language}\n"
+            f"⏰ Runtime: {runtime}</blockquote>"
+        )
+        final_parts.append(info_block)
+
+        download_block = "━━━━━ ⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜𝗡𝗞 ⬇️ ━━━━━"
+        final_parts.append(download_block)
+
+        if tutorial_section:
+            final_parts.append(f"<blockquote>{tutorial_section}</blockquote>")
+
     if custom_footer:
         final_parts.append(custom_footer)
 
