@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 
 # ---------------------------------------------------------------------------
@@ -936,26 +935,26 @@ async def generate_channel_caption(convo: dict, user_data: dict):
         episode_wise_links = convo.get("episode_wise_links", [])
 
         info_block = (
-            f"<blockquote>🎬 {title} ({year})\n"
+            f"<blockquote><b>🎬 {title} ({year})\n"
             f"━━━━━━━━━━━━━━━━━━\n"
             f"⭐️ Rating ∥ {rating}/10\n"
             f"🎭 Genres ∥ {genres}\n"
-            f"🈳 Languages : {language}</blockquote>"
+            f"🈳 Languages : {language}</b></blockquote>"
         )
         final_parts.append(info_block)
 
         if single_files_links or episode_wise_links:
             link_parts = []
             if single_files_links:
-                sf = "SINGLE FILES :\n" + "\n".join(single_files_links)
+                sf = "<blockquote><b>📂 SINGLE FILES :</b></blockquote>\n" + "\n".join(single_files_links)
                 link_parts.append(sf)
             if episode_wise_links:
-                ew = "EPISODE WISE :\n" + "\n".join(episode_wise_links)
+                ew = "<blockquote><b>⚡️ EPISODE WISE :</b></blockquote>\n" + "\n".join(episode_wise_links)
                 link_parts.append(ew)
             final_parts.append("\n\n".join(link_parts))
 
         if tutorial_section:
-            final_parts.append(f"<blockquote>{tutorial_section}</blockquote>")
+            final_parts.append(f"<blockquote><b>{tutorial_section}</b></blockquote>")
 
     else:
         # ── Movie Format ──────────────────────────────────────────────────
@@ -965,20 +964,22 @@ async def generate_channel_caption(convo: dict, user_data: dict):
         movie_link = links.get("movie", "")
 
         info_block = (
-            f"<blockquote>🎬 {title} ({year})\n"
+            f"<blockquote><b>🎬 {title} ({year})\n"
             f"━━━━━━━━━━━━━━━━━━\n"
             f"⭐️ Rating ∥ {rating}/10\n"
             f"🎭 Genres ∥ {genres}\n"
             f"🈳 Languages : {language}\n"
-            f"⏰ Runtime: {runtime}</blockquote>"
+            f"⏰ Runtime: {runtime}</b></blockquote>"
         )
         final_parts.append(info_block)
 
-        download_block = "━━━━━ ⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜𝗡𝗞 ⬇️ ━━━━━"
+        download_block = f"━━━━━ ⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜𝗡𝗞 ⬇️ ━━━━━"
+        if movie_link:
+            download_block += f"\n\n{movie_link}"
         final_parts.append(download_block)
 
         if tutorial_section:
-            final_parts.append(f"<blockquote>{tutorial_section}</blockquote>")
+            final_parts.append(f"<blockquote><b>{tutorial_section}>/b></blockquote>")
 
     if custom_footer:
         final_parts.append(custom_footer)
@@ -1787,4 +1788,5 @@ if __name__ == "__main__":
     logger.info("✅ Bot is starting...")
     app.run()
     logger.info("👋 Bot has stopped.")
+
 
