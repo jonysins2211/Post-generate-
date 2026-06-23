@@ -854,7 +854,7 @@ async def generate_final_post_preview(bot, uid, chat_id, status_msg: Message):
         get_files_url = convo.get("links", {}).get("movie")
 
     if get_files_url:
-        inline_keyboard.append([InlineKeyboardButton("🚀 𝗚𝗘𝗧 𝗬𝗢𝗨𝗥 𝗙𝗜𝗟𝗘𝗦 🚀", url=get_files_url)])
+        inline_keyboard.append([InlineKeyboardButton("🚀 𝗚𝗘𝗧 𝗬𝗢𝗨𝗥 𝗙𝗜𝗟𝗘𝗦 🚀", url=get_files_url, style=enums.ButtonStyle.PRIMARY)])
 
     for btn in user_data.get("custom_buttons", []):
         inline_keyboard.append([InlineKeyboardButton(btn["text"], url=btn["url"])])
