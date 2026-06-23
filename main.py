@@ -989,9 +989,9 @@ async def generate_channel_caption(convo: dict, user_data: dict):
         final_parts.append(info_block)
 
         if movie_link:
-            download_block = f"<a href='{movie_link}'>━━━━━ ⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜𝗡𝗞 ⬇️ ━━━━━</a>"
+            download_block = f"<a href='{movie_link}'>━━━ ⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜𝗡𝗞 ⬇️ ━━━</a>"
         else:
-            download_block = "━━━━━ ⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜𝗡𝗞 ⬇️ ━━━━━"
+            download_block = "━━━ ⬇️ 𝗗𝗢𝗪𝗡𝗟𝗢𝗔𝗗 𝗟𝗜𝗡𝗞 ⬇️ ━━━"
         final_parts.append(download_block)
 
         if tutorial_section:
